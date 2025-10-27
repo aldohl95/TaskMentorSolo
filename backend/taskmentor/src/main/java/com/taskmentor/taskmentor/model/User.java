@@ -3,6 +3,7 @@ package com.taskmentor.taskmentor.model;
 import com.taskmentor.taskmentor.enums.AccountType;
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,7 +12,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
     @SequenceGenerator(name = "user_seq", sequenceName = "users_user_id_seq", allocationSize = 1)
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false, updatable = false)
     private Long userId;
 
     @Column(unique = true, nullable = false)
@@ -19,6 +20,7 @@ public class User {
 
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(name="account_type",nullable = false)
     private AccountType accountType;
 
@@ -28,18 +30,26 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private MentorProfile mentorProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private StudentProfile studentProfile;
+
     public User () {
 
     }
 
     public User(Long userId, String email, String password, AccountType accountType, LocalDateTime createdAt,
-                LocalDateTime updatedAt) {
+                LocalDateTime updatedAt, MentorProfile mentorProfile, StudentProfile studentProfile) {
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.accountType = accountType;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.mentorProfile = mentorProfile;
+        this.studentProfile = studentProfile;
     }
 
     public Long getUserId() {
@@ -88,5 +98,32 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public MentorProfile getMentorProfile() {
+        return mentorProfile;
+    }
+
+    public void setMentorProfile(MentorProfile mentorProfile) {
+        this.mentorProfile = mentorProfile;
+    }
+
+    public StudentProfile getStudentProfile() {
+        return studentProfile;
+    }
+
+    public void setStudentProfile(StudentProfile studentProfile) {
+        this.studentProfile = studentProfile;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "UserId" + userId + '\'' +
+                "E-mail" + email + '\'' +
+                "AccountType" + accountType + '\'' +
+                "CreateAt" + createdAt + '\'' +
+                "UpdatedAt" + updatedAt + '\'' +
+                "}";
     }
 }
