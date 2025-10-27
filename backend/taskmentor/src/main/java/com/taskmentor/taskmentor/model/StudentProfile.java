@@ -29,9 +29,10 @@ public class StudentProfile{
 
     private String major;
 
-    @Column(name = "grad_year")
-    private String gradYear;
+    @Column(name = "graduation_Year")
+    private Integer gradYear;
 
+    @Column(name = "career_interests")
     private String interests;
 
     public StudentProfile() {
@@ -39,8 +40,8 @@ public class StudentProfile{
     }
 
     public StudentProfile(Long studentId, User user, String firstName, String lastName, String bio, String major,
-                          String gradYear, String interests) {
-        studentId = studentId;
+                          Integer gradYear, String interests) {
+        this.studentId = studentId;
         this.user = user;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -55,7 +56,7 @@ public class StudentProfile{
     }
 
     public void setStudentId(Long studentId) {
-        studentId = studentId;
+        this.studentId = studentId;
     }
 
     public User getUser() {
@@ -98,11 +99,11 @@ public class StudentProfile{
         this.major = major;
     }
 
-    public String getGradYear() {
+    public Integer getGradYear() {
         return gradYear;
     }
 
-    public void setGradYear(String gradYear) {
+    public void setGradYear(Integer gradYear) {
         this.gradYear = gradYear;
     }
 

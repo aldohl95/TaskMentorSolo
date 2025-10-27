@@ -116,6 +116,17 @@ public class User {
         this.studentProfile = studentProfile;
     }
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     @Override
     public String toString() {
         return "User{" +

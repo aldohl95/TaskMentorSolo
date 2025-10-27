@@ -14,7 +14,7 @@ public class Booking {
     @Column(name = "booking_id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq")
     @SequenceGenerator(name = "booking_seq", sequenceName = "bookings_booking_seq", allocationSize = 1)
-    private String bookingId;
+    private Long bookingId;
 
     @ManyToOne
     @JoinColumn(name ="student_id", nullable = false )
@@ -24,13 +24,15 @@ public class Booking {
     @JoinColumn(name = "mentor_id", nullable = false)
     private MentorProfile mentor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
     @Column(name = "proposed_date")
     private LocalDateTime proposedDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private Status status;
 
     @Column(name = "student_msg")
@@ -49,7 +51,7 @@ public class Booking {
 
     }
 
-    public Booking(String bookingId, StudentProfile student, MentorProfile mentor, Task task,
+    public Booking(Long bookingId, StudentProfile student, MentorProfile mentor, Task task,
                    LocalDateTime proposedDate, Status status, String studentMsg, String mentorResp,
                    LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.bookingId = bookingId;
@@ -64,11 +66,11 @@ public class Booking {
         this.updatedAt = updatedAt;
     }
 
-    public String getBookingId() {
+    public Long getBookingId() {
         return bookingId;
     }
 
-    public void setBookingId(String bookingId) {
+    public void setBookingId(Long bookingId) {
         this.bookingId = bookingId;
     }
 
@@ -143,4 +145,16 @@ public class Booking {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
 }
