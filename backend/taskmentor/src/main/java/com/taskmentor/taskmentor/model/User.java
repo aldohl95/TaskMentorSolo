@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
-    @SequenceGenerator(name = "user_seq", sequenceName = "users_user_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false, updatable = false)
     private Long userId;
 
@@ -82,6 +81,14 @@ public class User {
 
     public void setAccountType(AccountType accountType) {
         this.accountType = accountType;
+    }
+
+    public String getRole(){
+        return accountType.name();
+    }
+
+    public void setRole(String role){
+        this.accountType = AccountType.valueOf(role.toUpperCase());
     }
 
     public LocalDateTime getCreatedAt() {

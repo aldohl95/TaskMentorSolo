@@ -3,6 +3,7 @@ package com.taskmentor.taskmentor.service;
 import com.taskmentor.taskmentor.dto.LoginRequest;
 import com.taskmentor.taskmentor.dto.RegisterRequest;
 import com.taskmentor.taskmentor.dto.AuthResponse;
+import com.taskmentor.taskmentor.enums.AccountType;
 import com.taskmentor.taskmentor.model.User;
 import com.taskmentor.taskmentor.repository.UserRepository;
 import com.taskmentor.taskmentor.util.JwtUtil;
@@ -29,7 +30,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         // Check if user already exists
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already registered");
         }
 
@@ -37,14 +38,14 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
+        user.setAccountType(AccountType.valueOf(request.getRole().toUpperCase()));
 
         userRepository.save(user);
 
         // Generate token
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getId());
+        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getUserId());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -60,6 +61,7 @@ public class AuthService {
         // Generate token
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getId());
+        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getUserId());
     }
 }
+
