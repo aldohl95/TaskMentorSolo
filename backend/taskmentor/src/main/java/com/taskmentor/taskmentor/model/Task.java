@@ -30,7 +30,7 @@ public class Task {
     }
 
     public Task(Long taskId, MentorProfile mentor, String title, String description, Integer duration,
-                 Category category) {
+                Category category) {
         this.taskId = taskId;
         this.mentor = mentor;
         this.title = title;
@@ -75,8 +75,8 @@ public class Task {
         return duration;
     }
 
-    public Integer getDurationMax() {
-        return duration;
+    public void setDuration(Integer duration) {
+        this.duration = duration;
     }
 
 

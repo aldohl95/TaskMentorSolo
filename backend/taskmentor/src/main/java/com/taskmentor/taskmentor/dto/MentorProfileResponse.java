@@ -1,62 +1,29 @@
-package com.taskmentor.taskmentor.model;
+package com.taskmentor.taskmentor.dto;
 
-
-import jakarta.persistence.*;
-
-import com.taskmentor.taskmentor.model.Task;
-
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "mentors")
-public class MentorProfile {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mentor_seq")
-    @SequenceGenerator(name = "mentor_seq", sequenceName = "mentors_mentor_id_seq", allocationSize = 1)
-    @Column(name = "mentor_id", nullable = false, updatable = false)
+public class MentorProfileResponse {
     private Long mentorId;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", unique = true)
-    private User user;
-
-    @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks = new ArrayList<>();
-
-    @Column(name = "first_name")
+    private Long userId;
     private String firstName;
-
-    @Column (name = "last_name")
     private String lastName;
-
     private String bio;
-
-    @Column(name = "role_title")
     private String roleTitle;
-
     private String company;
-
-    @Column(name = "yrs_exp")
     private String yrsExp;
-
     private String industries;
     private String expertise;
-
-    @Column(name = "photo_url")
     private String photoUrl;
+    private List<TaskResponse> tasks;
 
-    public MentorProfile() {
+    // Constructors
+    public MentorProfileResponse() {}
 
-    }
-
-    public MentorProfile(Long mentorId, User user, List<Task> tasks, String firstName, String lastName, String bio,
-                         String roleTitle, String company, String yrsExp, String industries, String expertise, String photoUrl) {
+    public MentorProfileResponse(Long mentorId, Long userId, String firstName, String lastName,
+                                 String bio, String roleTitle, String company, String yrsExp,
+                                 String industries, String expertise, String photoUrl, List<TaskResponse> tasks) {
         this.mentorId = mentorId;
-        this.user = user;
-        this.tasks = tasks;
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.bio = bio;
@@ -66,8 +33,10 @@ public class MentorProfile {
         this.industries = industries;
         this.expertise = expertise;
         this.photoUrl = photoUrl;
+        this.tasks = tasks;
     }
 
+    // Getters and Setters
     public Long getMentorId() {
         return mentorId;
     }
@@ -76,20 +45,12 @@ public class MentorProfile {
         this.mentorId = mentorId;
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public List<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getFirstName() {
@@ -164,19 +125,11 @@ public class MentorProfile {
         this.photoUrl = photoUrl;
     }
 
-    @Override
-    public String toString() {
-        return "MentorProfile{" +
-                "MentorId" + mentorId +
-                "First Name" + firstName + '\'' +
-                "Last Name" + lastName + '\'' +
-                "Bio" + bio + '\'' +
-                "RoleTitle" + roleTitle + '\'' +
-                "Company" + company + '\'' +
-                "YearsExp" + yrsExp + '\'' +
-                "Industries" + industries + '\'' +
-                "Expertise" + expertise + '\''+
-                '}';
+    public List<TaskResponse> getTasks() {
+        return tasks;
+    }
 
+    public void setTasks(List<TaskResponse> tasks) {
+        this.tasks = tasks;
     }
 }

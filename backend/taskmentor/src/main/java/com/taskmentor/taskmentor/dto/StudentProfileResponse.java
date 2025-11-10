@@ -1,48 +1,22 @@
-package com.taskmentor.taskmentor.model;
+package com.taskmentor.taskmentor.dto;
 
-
-import jakarta.persistence.*;
-
-import java.io.Serializable;
-
-@Entity
-@Table(name = "students")
-public class StudentProfile{
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "student_seq")
-    @SequenceGenerator(name = "student_seq", sequenceName = "students_student_id_seq",  allocationSize = 1)
-    @Column(name = "student_id", nullable = false, updatable = false)
+public class StudentProfileResponse {
     private Long studentId;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", unique = true)
-    private User user;
-
-    @Column(name = "first_name")
+    private Long userId;
     private String firstName;
-
-    @Column(name = "last_name")
     private String lastName;
-
     private String bio;
-
     private String major;
-
-    @Column(name = "graduation_Year")
     private Integer gradYear;
-
-    @Column(name = "career_interests")
     private String interests;
 
-    public StudentProfile() {
+    // Constructors
+    public StudentProfileResponse() {}
 
-    }
-
-    public StudentProfile(Long studentId, User user, String firstName, String lastName, String bio, String major,
-                          Integer gradYear, String interests) {
+    public StudentProfileResponse(Long studentId, Long userId, String firstName, String lastName,
+                                  String bio, String major, Integer gradYear, String interests) {
         this.studentId = studentId;
-        this.user = user;
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.bio = bio;
@@ -51,6 +25,7 @@ public class StudentProfile{
         this.interests = interests;
     }
 
+    // Getters and Setters
     public Long getStudentId() {
         return studentId;
     }
@@ -59,12 +34,12 @@ public class StudentProfile{
         this.studentId = studentId;
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getFirstName() {
@@ -113,17 +88,5 @@ public class StudentProfile{
 
     public void setInterests(String interests) {
         this.interests = interests;
-    }
-
-    @Override
-    public String toString() {
-        return "StudentProfile{" +
-                "StudentId" + studentId + '\'' +
-                "First Name" + firstName + '\'' +
-                "Last Name" + lastName + '\'' +
-                "Bio" + bio + '\'' +
-                "Major" + major + '\'' +
-                "GradYear" + gradYear + '\'' +
-                "Interests" + interests + '}';
     }
 }
