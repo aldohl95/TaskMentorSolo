@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import studentService from '../services/studentService';
 import mentorService from '../services/mentorService';
 import bookingService from '../services/bookingService';
+import getErrorMessage from '../utils/errorMessage';
 
 function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [profile, setProfile] = useState(null);
   const [profileForm, setProfileForm] = useState({
     firstName: '',
     lastName: '',
@@ -35,7 +35,6 @@ function StudentDashboard() {
   const loadProfile = async () => {
     try {
       const data = await studentService.getMyProfile();
-      setProfile(data);
       setProfileForm({
         firstName: data.firstName || '',
         lastName: data.lastName || '',
@@ -44,8 +43,8 @@ function StudentDashboard() {
         gradYear: data.gradYear || '',
         interests: data.interests || ''
       });
-    } catch (error) {
-      console.log('Profile not created yet');
+    } catch {
+      // Expected for new users: the API returns an error until a profile exists, so keep the empty form.
     }
   };
 
@@ -76,7 +75,7 @@ function StudentDashboard() {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       loadProfile();
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to update profile') });
     } finally {
       setLoading(false);
     }

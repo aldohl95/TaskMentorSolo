@@ -1,0 +1,17 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# Secrets (never commit real values; .env.example files are fine)
+.env
+.env.*
+!.env.example
+
+# Build output and dependencies
+node_modules/
+dist/
+target/
+*.log

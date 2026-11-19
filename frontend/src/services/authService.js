@@ -29,8 +29,28 @@ const logout = () => {
   localStorage.removeItem('user');
 };
 
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+};
+
+// Returns the stored user, or null if storage is empty, corrupt, or the token has expired.
 const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem('user'));
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user?.token || isTokenExpired(user.token)) {
+      localStorage.removeItem('user');
+      return null;
+    }
+    return user;
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
 };
 
 const authService = {

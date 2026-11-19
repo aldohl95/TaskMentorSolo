@@ -1,11 +1,7 @@
 @import "tailwindcss";
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* No global "* { margin: 0; padding: 0 }" reset here: Tailwind's preflight already
+   does that, and an unlayered rule would override every padding/margin utility. */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

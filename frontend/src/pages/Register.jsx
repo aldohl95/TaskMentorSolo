@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
+import useAuth from '../auth/useAuth';
+import getErrorMessage from '../utils/errorMessage';
 
 function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -37,10 +39,10 @@ function Register() {
     setLoading(true);
 
     try {
-      await authService.register(formData.email, formData.password, formData.role);
-      navigate('/dashboard');
+      await register(formData.email, formData.password, formData.role);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data || 'Registration failed');
+      setError(getErrorMessage(err, 'Registration failed'));
     } finally {
       setLoading(false);
     }

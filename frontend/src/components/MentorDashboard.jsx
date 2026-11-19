@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import mentorService from '../services/mentorService';
 import taskService from '../services/taskService';
 import bookingService from '../services/bookingService';
+import getErrorMessage from '../utils/errorMessage';
 
 function MentorDashboard() {
   const [activeTab, setActiveTab] = useState('profile');
-  const [profile, setProfile] = useState(null);
   const [profileForm, setProfileForm] = useState({
     firstName: '',
     lastName: '',
@@ -38,7 +38,6 @@ function MentorDashboard() {
   const loadProfile = async () => {
     try {
       const data = await mentorService.getMyProfile();
-      setProfile(data);
       setProfileForm({
         firstName: data.firstName || '',
         lastName: data.lastName || '',
@@ -51,8 +50,8 @@ function MentorDashboard() {
         photoUrl: data.photoUrl || ''
       });
       setTasks(data.tasks || []);
-    } catch (error) {
-      console.log('Profile not created yet');
+    } catch {
+      // Expected for new users: the API returns an error until a profile exists, so keep the empty form.
     }
   };
 
@@ -83,7 +82,7 @@ function MentorDashboard() {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       loadProfile();
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to update profile') });
     } finally {
       setLoading(false);
     }
@@ -112,7 +111,7 @@ function MentorDashboard() {
       loadTasks();
       loadProfile();
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save task' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to save task') });
     } finally {
       setLoading(false);
     }
