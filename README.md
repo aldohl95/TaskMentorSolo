@@ -1,71 +1,60 @@
-## 📘 Project Name
-Task Mentor 
- 
-A web application that connects college students with professionals through structured, task-based mentorship
----
+# TaskMentor
 
-## 👥 Group Members / Contributors
+A web app that connects college students with professionals through **structured, task-based mentorship**.
 
-| Name | Role | GitHub Username |
-|------|------|-----------------|
-| Tevita Mathias |  Project Manaager/Developer | @aldohl95 |
-| Vietnam(Michael) Ngo | Frontend Developer | @vietnamngo |
-| Tyson Ringelstetter | Backend Developer | @TysonnR |
-| James No | QA / Documentation | @james-no |
+Instead of an open-ended "will you be my mentor?", mentors publish a **task menu** of specific, time-boxed
+services (for example *Resume Review, 30 min*) and students book exactly the help they need.
 
+> **Status:** work in progress, being prepared for a pilot with a community college career center.
+> Core accounts, profiles, task menus, search, and booking work today; scheduling, notifications, and
+> deployment are still to come (see the Roadmap below).
+
+> **About this repository:** TaskMentor began as an idea for a class team project. This repository is a
+> separate, solo implementation, and all of the code in it was written by me, [Tevita Mathias](https://github.com/aldohl95).
 
 ---
 
-## 🧭 Brief Background About the Project
-  
-Task Mentor addresses the inefficiencies of traditional mentorship by
-enabling specific, time-bounded interactions. 
-Mentors offer a "task menu" of services (e.g., "Resume Review - 30 min"), 
-and students book exactly the help they need.
----
+## ✨ What works today
 
-## ⚙️ Current Features
+- **Accounts:** register and sign in as a **student** or a **mentor**; JWT authentication.
+- **Role-based access:** students and mentors can only do what their role allows, and people can only see
+  their own bookings and private profiles (covered by automated tests).
+- **Profiles:** students and mentors each manage their own profile.
+- **Task menu:** mentors create, edit, and delete tasks with a title, description, duration (15-180 min), and
+  category (resume review, mock interview, career advice).
+- **Mentor search:** students search the mentor directory by keyword (the API also filters by industry and expertise).
+- **Booking:** students request a task at a proposed time; the mentor accepts, declines, or completes it, and
+  the student can cancel. Two bookings at the same start time cannot both be accepted.
+- **Clear API errors:** consistent status codes and error format (see API conventions below).
 
--  Secure user authentication with JWT 
--  Comprehensive student and mentor profiles 
--  Task menu system for mentors to define offerings -**in progress**
--  Advanced mentor search and filtering -**in progress**
--  Session booking with email confirmations -**in progress**
--  Responsive design for desktop -**in progress**
+## 🧰 Tech stack
 
----
+| Layer | Technology |
+|---|---|
+| Backend | Java 21, Spring Boot 3.5, Spring Security (JWT with jjwt), Spring Data JPA |
+| Database | PostgreSQL |
+| Frontend | React 19, Vite, Tailwind CSS 4, React Router, Axios |
+| Testing | JUnit 5, Spring MockMvc, Testcontainers (real PostgreSQL), Node's built-in test runner |
 
-## 🧩 Planned Features / Future Work
+```
+backend/taskmentor/   Spring Boot API (controller -> service -> repository, DTOs, security, exceptions)
+frontend/             React single-page app
+```
 
-- Sesion Dashboard
-- Rating & Review System
-- Advanced Scheduling
-- Messaging System
+## 🗺️ Roadmap
 
----
+Done:
+- [x] Authentication, profiles, task menus, mentor search, booking requests
+- [x] Secrets kept out of source control; the API refuses to start without a strong JWT secret
+- [x] Correct HTTP status codes, role and ownership checks, and an automated API test suite
 
-## 📅 Week-by-Week Plan
-*(This should align with your project’s real timeline — update each week’s goals.)*
-
-| **Week** | **Milestone / Deliverables** | **Owners** | **Evidence (PRs/Links/Demos)** |
-|-----------|------------------------------|-------------|--------------------------------|
-| 1 | Authentication & Database Foundation | Tean | Spring security, authentication UI, user login/registration |
-| 2 | User Profiles | Team | Crud, Database persistence, UI profile Creation |
-| 3 | Task System & public Profile | Team | Task creation/deletion, Task Categorization, UI layout for task display |
-| 4 | Search & Discovery | Team | Mentor Discovery Page, Filters |
-| 5 | Booking System | Team | Booking Requests, Proper Booking relationships, Mentor view booking |
-| 6 | Booking Completion & Core Polish | Team | Booking Accept/Decline, Double Booking Prevention, Status updates in UI |
-| 7 | Buffer Week | Team | Code cleanup, Paths tested, Main Features tested |
-| 8 | Deployment preperation | Team |Staging enviornment functional, Video demo, final slides |
-
----
-
-## 🧠 Definition of Done (DoD)
-A feature is **done** when:
-- Code is reviewed and merged into `main`  
-- All acceptance criteria are met   
-- Demo shows functional feature without breaking existing functionality  
-- Documentation (README / inline comments) is up to date  
+Next:
+- [ ] Versioned database migrations (Flyway), one-command local setup with Docker Compose
+- [ ] Continuous integration (lint, tests, build on every pull request)
+- [ ] Mentor availability and timezone-aware scheduling, with double-booking prevented by the database itself
+- [ ] Email and calendar-invite notifications and reminders
+- [ ] Mentor approval, college-email sign-up, password reset, and rate limiting
+- [ ] Deployment to AWS with infrastructure as code, then a pilot with real students and mentors
 
 ---
 
