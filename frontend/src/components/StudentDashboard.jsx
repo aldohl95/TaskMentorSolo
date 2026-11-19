@@ -106,9 +106,20 @@ function StudentDashboard() {
       setBookingForm({ taskId: '', proposedDate: '', studentMsg: '' });
       loadBookings();
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data || 'Failed to create booking' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to create booking') });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Cancel this booking?')) return;
+    try {
+      await bookingService.updateBookingStatus(bookingId, { status: 'CANCELLED' });
+      setMessage({ type: 'success', text: 'Booking cancelled' });
+      loadBookings();
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to cancel booking') });
     }
   };
 
@@ -117,6 +128,7 @@ function StudentDashboard() {
       case 'PENDING': return 'bg-yellow-100 text-yellow-800';
       case 'ACCEPTED': return 'bg-green-100 text-green-800';
       case 'DECLINED': return 'bg-red-100 text-red-800';
+      case 'CANCELLED': return 'bg-gray-200 text-gray-600';
       case 'COMPLETED': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -337,6 +349,14 @@ function StudentDashboard() {
                     <p className="text-sm text-gray-700">
                       <span className="font-semibold">Mentor response:</span> {booking.mentorResp}
                     </p>
+                  )}
+                  {(booking.status === 'PENDING' || booking.status === 'ACCEPTED') && (
+                    <button
+                      onClick={() => handleCancelBooking(booking.bookingId)}
+                      className="mt-3 px-3 py-1 text-sm border border-red-300 text-red-700 rounded-md hover:bg-red-50"
+                    >
+                      Cancel booking
+                    </button>
                   )}
                 </div>
               ))}

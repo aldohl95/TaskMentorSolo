@@ -1,26 +1,36 @@
 package com.taskmentor.taskmentor.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class MentorProfileRequest {
 
     @NotBlank(message = "First name is required")
+    @Size(max = 100, message = "First name must be at most 100 characters")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
+    @Size(max = 100, message = "Last name must be at most 100 characters")
     private String lastName;
 
+    @Size(max = 2000, message = "Bio must be at most 2000 characters")
     private String bio;
 
     @NotBlank(message = "Role title is required")
+    @Size(max = 100, message = "Role title must be at most 100 characters")
     private String roleTitle;
 
     @NotBlank(message = "Company is required")
+    @Size(max = 100, message = "Company must be at most 100 characters")
     private String company;
 
+    @Size(max = 50, message = "Years of experience must be at most 50 characters")
     private String yrsExp;
+    @Size(max = 1000, message = "Industries must be at most 1000 characters")
     private String industries;
+    @Size(max = 1000, message = "Expertise must be at most 1000 characters")
     private String expertise;
+    @Size(max = 500, message = "Photo URL must be at most 500 characters")
     private String photoUrl;
 
     // Constructors

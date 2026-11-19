@@ -4,7 +4,7 @@ import authHeader from '../utils/authHeader';
 const API_URL = 'http://localhost:8080/api/students';
 
 const createOrUpdateProfile = async (profileData) => {
-  const response = await axios.post(`${API_URL}/profile`, profileData, {
+  const response = await axios.put(`${API_URL}/profile`, profileData, {
     headers: authHeader()
   });
   return response.data;

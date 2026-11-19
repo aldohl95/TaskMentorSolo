@@ -3,113 +3,70 @@ package com.taskmentor.taskmentor.controller;
 import com.taskmentor.taskmentor.dto.TaskRequest;
 import com.taskmentor.taskmentor.dto.TaskResponse;
 import com.taskmentor.taskmentor.enums.Category;
+import com.taskmentor.taskmentor.security.AuthUser;
 import com.taskmentor.taskmentor.service.TaskService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
-@CrossOrigin(origins = "http://localhost:5173")
 public class TaskController {
 
-    @Autowired
-    private TaskService taskService;
+    private final TaskService taskService;
 
-    @Autowired
-    private com.taskmentor.taskmentor.repository.UserRepository userRepository;
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @PostMapping
-    public ResponseEntity<?> createTask(@Valid @RequestBody TaskRequest request,
-                                        Authentication authentication) {
-        try {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Long userId = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"))
-                    .getUserId();
-
-            TaskResponse response = taskService.createTask(userId, request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PreAuthorize("hasRole('MENTOR')")
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request,
+                                                   @AuthenticationPrincipal AuthUser me) {
+        TaskResponse created = taskService.createTask(me.userId(), request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(created.getTaskId()).toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{taskId}")
-    public ResponseEntity<?> updateTask(@PathVariable Long taskId,
-                                        @Valid @RequestBody TaskRequest request,
-                                        Authentication authentication) {
-        try {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Long userId = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"))
-                    .getUserId();
-
-            TaskResponse response = taskService.updateTask(taskId, userId, request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PreAuthorize("hasRole('MENTOR')")
+    public TaskResponse updateTask(@PathVariable Long taskId,
+                                   @Valid @RequestBody TaskRequest request,
+                                   @AuthenticationPrincipal AuthUser me) {
+        return taskService.updateTask(taskId, me.userId(), request);
     }
 
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long taskId,
-                                        Authentication authentication) {
-        try {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Long userId = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"))
-                    .getUserId();
-
-            taskService.deleteTask(taskId, userId);
-            return ResponseEntity.ok("Task deleted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PreAuthorize("hasRole('MENTOR')")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId, @AuthenticationPrincipal AuthUser me) {
+        taskService.deleteTask(taskId, me.userId());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<?> getTask(@PathVariable Long taskId) {
-        try {
-            TaskResponse response = taskService.getTask(taskId);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public TaskResponse getTask(@PathVariable Long taskId) {
+        return taskService.getTask(taskId);
     }
 
     @GetMapping("/mentor/{mentorId}")
-    public ResponseEntity<?> getTasksByMentor(@PathVariable Long mentorId) {
-        try {
-            List<TaskResponse> tasks = taskService.getTasksByMentor(mentorId);
-            return ResponseEntity.ok(tasks);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public List<TaskResponse> getTasksByMentor(@PathVariable Long mentorId) {
+        return taskService.getTasksByMentor(mentorId);
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<?> getTasksByCategory(@PathVariable Category category) {
-        try {
-            List<TaskResponse> tasks = taskService.getTasksByCategory(category);
-            return ResponseEntity.ok(tasks);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public List<TaskResponse> getTasksByCategory(@PathVariable Category category) {
+        return taskService.getTasksByCategory(category);
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllTasks() {
-        try {
-            List<TaskResponse> tasks = taskService.getAllTasks();
-            return ResponseEntity.ok(tasks);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public List<TaskResponse> getAllTasks() {
+        return taskService.getAllTasks();
     }
 }
