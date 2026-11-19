@@ -1,27 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
+import useAuth from '../auth/useAuth';
 import StudentDashboard from '../components/StudentDashboard';
 import MentorDashboard from '../components/MentorDashboard';
 
 function Dashboard() {
-  const navigate = useNavigate();
-  const [user] = useState(authService.getCurrentUser());
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
-  };
-
-  if (!user) {
-    return null;
-  }
+  // ProtectedRoute guarantees a user here; logging out re-renders the route and redirects.
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,7 +20,7 @@ function Dashboard() {
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-700">{user.email}</span>
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               Logout

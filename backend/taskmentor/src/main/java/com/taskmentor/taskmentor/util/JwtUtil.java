@@ -2,45 +2,59 @@ package com.taskmentor.taskmentor.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    /** Minimum key size for HS256 is 256 bits. */
+    private static final int MIN_SECRET_BYTES = 32;
 
-    @Value("${jwt.expiration}")
-    private Long expiration;
+    /** The placeholder that was once committed to git; tokens signed with it can be forged by anyone. */
+    private static final String LEAKED_PLACEHOLDER =
+            "your-secret-key-here-make-it-long-and-secure-at-least-256-bits";
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    private final String secret;
+    private final long expirationMs;
+    private SecretKey signingKey;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.expiration}") long expirationMs) {
+        this.secret = secret;
+        this.expirationMs = expirationMs;
+    }
+
+    @PostConstruct
+    void init() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET is not set. See backend/taskmentor/.env.example.");
+        }
+        if (LEAKED_PLACEHOLDER.equals(secret)) {
+            throw new IllegalStateException("JWT_SECRET is the publicly known placeholder. Generate a new one.");
+        }
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT_SECRET must be at least " + MIN_SECRET_BYTES + " bytes.");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(String email, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
-        return createToken(claims, email);
-    }
-
-    private String createToken(Map<String, Object> claims, String subject) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
-
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .subject(email)
+                .claim("role", role)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + expirationMs))
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -56,17 +70,17 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        return claimsResolver.apply(extractAllClaims(token));
     }
 
+    /** Verifies the signature and expiry; throws a JwtException if either is invalid. */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(signingKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public boolean isTokenExpired(String token) {
@@ -74,8 +88,6 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, String email) {
-        final String extractedEmail = extractEmail(token);
-        return (extractedEmail.equals(email) && !isTokenExpired(token));
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
     }
 }
-

@@ -71,19 +71,50 @@ A feature is **done** when:
 
 ## 💻 How to Run
 
-**Your Entry:**
+**Prerequisites:** Java 21+, Node.js 22+, PostgreSQL 16+ running locally.
 
+### 1. Clone the repository
+```bash
+git clone https://github.com/aldohl95/TaskMentorSolo.git
+cd TaskMentorSolo
+```
 
-### 1. Clone Repository
-```
-git clone https://github.com/don-strong/task-mentor.git
-cd task-mentor
+### 2. Backend setup (Spring Boot)
+Create the database, then configure secrets. Secrets are never committed: they are read from
+environment variables, or from a gitignored `backend/taskmentor/.env` file for local development.
+
+```bash
+createdb TaskMentorSolo
+cd backend/taskmentor
+cp .env.example .env
 ```
 
-### 2. Backend Setup (Python/Flask)
-```
-TBD
+Edit `.env` and set:
 
-### 3. Frontend Setup (React)
+| Variable | Required | Description |
+|---|---|---|
+| `DB_URL` | no | JDBC URL (default `jdbc:postgresql://localhost:5432/TaskMentorSolo`) |
+| `DB_USERNAME` | no | Database user (default `postgres`) |
+| `DB_PASSWORD` | **yes** | Database password |
+| `JWT_SECRET` | **yes** | Token signing key, at least 32 bytes. Generate with `openssl rand -base64 64` |
+| `JWT_EXPIRATION_MS` | no | Token lifetime in ms (default 24h) |
+| `SHOW_SQL` | no | Log SQL statements (default `false`) |
+
+The backend refuses to start if `JWT_SECRET` is missing or too short.
+
+```bash
+./mvnw spring-boot:run      # API on http://localhost:8080
 ```
-TBD
+
+### 3. Frontend setup (React + Vite)
+```bash
+cd frontend
+npm install
+npm run dev                 # http://localhost:5173
+```
+
+### 4. Checks
+```bash
+cd backend/taskmentor && ./mvnw test     # integration test needs the database and .env
+cd frontend && npm run lint && npm test && npm run build
+```

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
+import useAuth from '../auth/useAuth';
+import getErrorMessage from '../utils/errorMessage';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -24,11 +26,10 @@ function Login() {
     setLoading(true);
 
     try {
-      const user = await authService.login(formData.email, formData.password);
-      setCurrentUser(user); // <-- notify App about login
-      navigate('/dashboard');
+      await login(formData.email, formData.password);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data || 'Invalid email or password');
+      setError(getErrorMessage(err, 'Invalid email or password'));
     } finally {
       setLoading(false);
     }
