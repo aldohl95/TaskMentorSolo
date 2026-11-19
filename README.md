@@ -1,5 +1,7 @@
 # TaskMentor
 
+[![CI](https://github.com/aldohl95/TaskMentorSolo/actions/workflows/ci.yml/badge.svg)](https://github.com/aldohl95/TaskMentorSolo/actions/workflows/ci.yml)
+
 A web app that connects college students with professionals through **structured, task-based mentorship**.
 
 Instead of an open-ended "will you be my mentor?", mentors publish a **task menu** of specific, time-boxed
@@ -48,9 +50,9 @@ Done:
 - [x] Secrets kept out of source control; the API refuses to start without a strong JWT secret
 - [x] Correct HTTP status codes, role and ownership checks, and an automated API test suite
 - [x] Versioned database migrations (Flyway) and a one-command local database (Docker Compose)
+- [x] Continuous integration: lint, tests, and build on every pull request
 
 Next:
-- [ ] Continuous integration (lint, tests, build on every pull request)
 - [ ] Peer tutoring: students request tutor status (approved by an admin), pick their subjects and course numbers
 - [ ] Tutor availability: online or in-person blocks with a hall and room, one-on-one or group capacity, and drop-in hours
 - [ ] Instant booking in a single campus timezone, with seat limits and double-booking prevented by the database itself
@@ -119,6 +121,8 @@ npm run dev                 # http://localhost:5173
 cd backend/taskmentor && ./mvnw test     # needs Docker running
 cd frontend && npm run lint && npm test && npm run build
 ```
+
+GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) runs these same commands on every pull request and on every push to `main`.
 
 The backend tests call the real HTTP API against a throwaway PostgreSQL 16 container
 ([Testcontainers](https://testcontainers.com)), so they need neither your local database nor `.env`.
