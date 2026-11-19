@@ -1,13 +1,11 @@
 package com.taskmentor.taskmentor;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class TaskmentorApplicationTests {
+class TaskmentorApplicationTests extends IntegrationTest {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

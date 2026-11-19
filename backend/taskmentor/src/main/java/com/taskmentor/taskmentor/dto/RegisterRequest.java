@@ -3,19 +3,23 @@ package com.taskmentor.taskmentor.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public class RegisterRequest {
 
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
+    @Size(max = 255, message = "Email must be at most 255 characters")
     private String email;
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(max = 72, message = "Password must be at most 72 characters")
     private String password;
 
     @NotBlank(message = "Role is required")
+    @Pattern(regexp = "(?i)STUDENT|MENTOR", message = "Role must be STUDENT or MENTOR")
     private String role; // "STUDENT" or "MENTOR"
 
     // Constructors

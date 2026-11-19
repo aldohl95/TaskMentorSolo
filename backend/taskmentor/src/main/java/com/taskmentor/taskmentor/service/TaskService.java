@@ -3,11 +3,13 @@ package com.taskmentor.taskmentor.service;
 import com.taskmentor.taskmentor.dto.TaskRequest;
 import com.taskmentor.taskmentor.dto.TaskResponse;
 import com.taskmentor.taskmentor.enums.Category;
+import com.taskmentor.taskmentor.exception.ConflictException;
+import com.taskmentor.taskmentor.exception.ForbiddenException;
+import com.taskmentor.taskmentor.exception.NotFoundException;
 import com.taskmentor.taskmentor.model.MentorProfile;
 import com.taskmentor.taskmentor.model.Task;
 import com.taskmentor.taskmentor.repository.MentorProfileRepository;
 import com.taskmentor.taskmentor.repository.TaskRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,16 +19,18 @@ import java.util.stream.Collectors;
 @Service
 public class TaskService {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    private final TaskRepository taskRepository;
+    private final MentorProfileRepository mentorProfileRepository;
 
-    @Autowired
-    private MentorProfileRepository mentorProfileRepository;
+    public TaskService(TaskRepository taskRepository, MentorProfileRepository mentorProfileRepository) {
+        this.taskRepository = taskRepository;
+        this.mentorProfileRepository = mentorProfileRepository;
+    }
 
     @Transactional
     public TaskResponse createTask(Long userId, TaskRequest request) {
         MentorProfile mentor = mentorProfileRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new RuntimeException("Mentor profile not found"));
+                .orElseThrow(() -> new ConflictException("Complete your mentor profile before creating tasks"));
 
         Task task = new Task();
         task.setMentor(mentor);
@@ -43,11 +47,11 @@ public class TaskService {
     @Transactional
     public TaskResponse updateTask(Long taskId, Long userId, TaskRequest request) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         // Verify the task belongs to the requesting mentor
         if (!task.getMentor().getUser().getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to update this task");
+            throw new ForbiddenException("You can only edit your own tasks");
         }
 
         task.setTitle(request.getTitle());
@@ -63,11 +67,11 @@ public class TaskService {
     @Transactional
     public void deleteTask(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
 
         // Verify the task belongs to the requesting mentor
         if (!task.getMentor().getUser().getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to delete this task");
+            throw new ForbiddenException("You can only delete your own tasks");
         }
 
         // TODO: Add check to prevent deletion if there are upcoming bookings
@@ -77,7 +81,7 @@ public class TaskService {
 
     public TaskResponse getTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
         return mapToResponse(task);
     }
 

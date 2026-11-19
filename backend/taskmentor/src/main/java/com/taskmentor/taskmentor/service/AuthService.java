@@ -1,66 +1,61 @@
 package com.taskmentor.taskmentor.service;
 
+import com.taskmentor.taskmentor.dto.AuthResponse;
 import com.taskmentor.taskmentor.dto.LoginRequest;
 import com.taskmentor.taskmentor.dto.RegisterRequest;
-import com.taskmentor.taskmentor.dto.AuthResponse;
 import com.taskmentor.taskmentor.enums.AccountType;
+import com.taskmentor.taskmentor.exception.ConflictException;
 import com.taskmentor.taskmentor.model.User;
 import com.taskmentor.taskmentor.repository.UserRepository;
+import com.taskmentor.taskmentor.security.AuthUser;
 import com.taskmentor.taskmentor.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.authenticationManager = authenticationManager;
+    }
 
     public AuthResponse register(RegisterRequest request) {
-        // Check if user already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new ConflictException("Email already registered");
         }
 
-        // Create new user
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // The role string is validated by RegisterRequest, so valueOf cannot fail here.
         user.setAccountType(AccountType.valueOf(request.getRole().toUpperCase()));
+        user = userRepository.save(user);
 
-        userRepository.save(user);
-
-        // Generate token
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
-        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getUserId());
+        return toResponse(user.getEmail(), user.getAccountType(), user.getUserId());
     }
 
+    /** Throws BadCredentialsException (mapped to 401) for an unknown email or a wrong password. */
     public AuthResponse login(LoginRequest request) {
-        // Authenticate user
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        AuthUser user = (AuthUser) authentication.getPrincipal();
 
-        // Load user
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return toResponse(user.email(), user.role(), user.userId());
+    }
 
-        // Generate token
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
-        return new AuthResponse(token, user.getEmail(), user.getRole(), user.getUserId());
+    private AuthResponse toResponse(String email, AccountType role, Long userId) {
+        return new AuthResponse(jwtUtil.generateToken(email, role.name()), email, role.name(), userId);
     }
 }

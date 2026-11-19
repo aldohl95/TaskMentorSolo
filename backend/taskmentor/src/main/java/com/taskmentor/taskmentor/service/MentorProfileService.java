@@ -2,35 +2,39 @@ package com.taskmentor.taskmentor.service;
 
 import com.taskmentor.taskmentor.dto.MentorProfileRequest;
 import com.taskmentor.taskmentor.dto.MentorProfileResponse;
+import com.taskmentor.taskmentor.dto.SaveResult;
 import com.taskmentor.taskmentor.dto.TaskResponse;
+import com.taskmentor.taskmentor.exception.NotFoundException;
 import com.taskmentor.taskmentor.model.MentorProfile;
 import com.taskmentor.taskmentor.model.Task;
 import com.taskmentor.taskmentor.model.User;
 import com.taskmentor.taskmentor.repository.MentorProfileRepository;
 import com.taskmentor.taskmentor.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class MentorProfileService {
 
-    @Autowired
-    private MentorProfileRepository mentorProfileRepository;
+    private final MentorProfileRepository mentorProfileRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public MentorProfileService(MentorProfileRepository mentorProfileRepository, UserRepository userRepository) {
+        this.mentorProfileRepository = mentorProfileRepository;
+        this.userRepository = userRepository;
+    }
 
     @Transactional
-    public MentorProfileResponse createOrUpdateProfile(Long userId, MentorProfileRequest request) {
+    public SaveResult<MentorProfileResponse> createOrUpdateProfile(Long userId, MentorProfileRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        MentorProfile profile = mentorProfileRepository.findByUser(user)
-                .orElse(new MentorProfile());
+        Optional<MentorProfile> existing = mentorProfileRepository.findByUser(user);
+        MentorProfile profile = existing.orElseGet(MentorProfile::new);
 
         profile.setUser(user);
         profile.setFirstName(request.getFirstName());
@@ -45,18 +49,18 @@ public class MentorProfileService {
 
         profile = mentorProfileRepository.save(profile);
 
-        return mapToResponse(profile);
+        return new SaveResult<>(mapToResponse(profile), existing.isEmpty());
     }
 
     public MentorProfileResponse getProfileByUserId(Long userId) {
         MentorProfile profile = mentorProfileRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new RuntimeException("Mentor profile not found"));
+                .orElseThrow(() -> new NotFoundException("Mentor profile not found"));
         return mapToResponse(profile);
     }
 
     public MentorProfileResponse getProfileByMentorId(Long mentorId) {
         MentorProfile profile = mentorProfileRepository.findById(mentorId)
-                .orElseThrow(() -> new RuntimeException("Mentor profile not found"));
+                .orElseThrow(() -> new NotFoundException("Mentor profile not found"));
         return mapToResponse(profile);
     }
 

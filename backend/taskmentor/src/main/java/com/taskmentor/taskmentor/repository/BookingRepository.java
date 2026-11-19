@@ -15,6 +15,9 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    /** True if the mentor (identified by their user id) has ever been booked by this student. */
+    boolean existsByMentor_User_UserIdAndStudent_StudentId(Long mentorUserId, Long studentId);
+
     List<Booking> findByStudent(StudentProfile student);
 
     List<Booking> findByMentor(MentorProfile mentor);

@@ -71,7 +71,7 @@ A feature is **done** when:
 
 ## 💻 How to Run
 
-**Prerequisites:** Java 21+, Node.js 22+, PostgreSQL 16+ running locally.
+**Prerequisites:** Java 21+, Node.js 22+, PostgreSQL 16+ running locally, and Docker (only to run the backend tests).
 
 ### 1. Clone the repository
 ```bash
@@ -115,6 +115,53 @@ npm run dev                 # http://localhost:5173
 
 ### 4. Checks
 ```bash
-cd backend/taskmentor && ./mvnw test     # integration test needs the database and .env
+cd backend/taskmentor && ./mvnw test     # needs Docker running
 cd frontend && npm run lint && npm test && npm run build
+```
+
+The backend tests call the real HTTP API against a throwaway PostgreSQL 16 container
+([Testcontainers](https://testcontainers.com)), so they need neither your local database nor `.env`.
+On macOS with Docker Desktop, if the tests report "Could not find a valid Docker environment", point
+Testcontainers at Docker Desktop's socket: `export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock`.
+
+## 🔌 API conventions
+
+Errors are [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem details
+(`Content-Type: application/problem+json`):
+
+```json
+{"status": 409, "title": "Conflict", "detail": "Email already registered"}
+{"status": 400, "detail": "Validation failed", "errors": {"email": "Invalid email format"}}
+```
+
+| Status | Meaning |
+|---|---|
+| `200` | Success (including a profile update) |
+| `201` | Created: register, create task, create booking, first save of a profile (`Location` header on tasks and bookings) |
+| `204` | Deleted (task) |
+| `400` | Invalid input (field errors in `errors`), or a request that makes no sense (e.g. a task from a different mentor) |
+| `401` | Missing, invalid, or expired token; wrong email or password |
+| `403` | Logged in, but the role or ownership does not allow it (e.g. a student creating a task) |
+| `404` | Not found, or hidden from you (other people's bookings and student profiles) |
+| `409` | Conflicts with current state: duplicate email, time slot already booked, profile not completed yet |
+
+Profiles are saved with `PUT /api/students/profile` and `PUT /api/mentors/profile` (201 the first time,
+200 afterwards). A student may read their own bookings and cancel them; only the booking's mentor can
+accept, decline, or complete it.
+
+### Upgrading an existing local database
+
+The schema is currently created by Hibernate (`ddl-auto=update`), which never changes existing `CHECK`
+constraints. A database created before the enum changes (`CARRER_ADVICE` → `CAREER_ADVICE`, new
+`CANCELLED` status) needs this once; new databases are unaffected. Flyway migrations (Phase 1) replace this.
+
+```sql
+BEGIN;
+ALTER TABLE tasks DROP CONSTRAINT tasks_category_check;
+ALTER TABLE tasks ADD CONSTRAINT tasks_category_check
+  CHECK (category IN ('RESUME_REVIEW', 'MOCK_INTERVIEW', 'CAREER_ADVICE'));
+ALTER TABLE bookings DROP CONSTRAINT bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
+  CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'COMPLETED', 'CANCELLED'));
+COMMIT;
 ```

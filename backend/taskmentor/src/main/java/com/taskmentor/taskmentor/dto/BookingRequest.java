@@ -1,6 +1,8 @@
 package com.taskmentor.taskmentor.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -13,8 +15,10 @@ public class BookingRequest {
     private Long taskId;
 
     @NotNull(message = "Proposed date is required")
+    @Future(message = "Proposed date must be in the future")
     private LocalDateTime proposedDate;
 
+    @Size(max = 1000, message = "Message must be at most 1000 characters")
     private String studentMsg;
 
     // Constructors

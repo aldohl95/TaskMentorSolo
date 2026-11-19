@@ -1,64 +1,45 @@
 package com.taskmentor.taskmentor.controller;
 
+import com.taskmentor.taskmentor.dto.SaveResult;
 import com.taskmentor.taskmentor.dto.StudentProfileRequest;
 import com.taskmentor.taskmentor.dto.StudentProfileResponse;
+import com.taskmentor.taskmentor.security.AuthUser;
 import com.taskmentor.taskmentor.service.StudentProfileService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/students")
-@CrossOrigin(origins = "http://localhost:5173")
 public class StudentProfileController {
 
-    @Autowired
-    private StudentProfileService studentProfileService;
+    private final StudentProfileService studentProfileService;
 
-    @Autowired
-    private com.taskmentor.taskmentor.repository.UserRepository userRepository;
+    public StudentProfileController(StudentProfileService studentProfileService) {
+        this.studentProfileService = studentProfileService;
+    }
 
-    @PostMapping("/profile")
-    public ResponseEntity<?> createOrUpdateProfile(@Valid @RequestBody StudentProfileRequest request,
-                                                   Authentication authentication) {
-        try {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Long userId = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"))
-                    .getUserId();
-
-            StudentProfileResponse response = studentProfileService.createOrUpdateProfile(userId, request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    /** Idempotent save of the caller's own profile: 201 the first time, 200 afterwards. */
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<StudentProfileResponse> saveMyProfile(@Valid @RequestBody StudentProfileRequest request,
+                                                                @AuthenticationPrincipal AuthUser me) {
+        SaveResult<StudentProfileResponse> result = studentProfileService.createOrUpdateProfile(me.userId(), request);
+        return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.body());
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<?> getMyProfile(Authentication authentication) {
-        try {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Long userId = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"))
-                    .getUserId();
-
-            StudentProfileResponse response = studentProfileService.getProfileByUserId(userId);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PreAuthorize("hasRole('STUDENT')")
+    public StudentProfileResponse getMyProfile(@AuthenticationPrincipal AuthUser me) {
+        return studentProfileService.getProfileByUserId(me.userId());
     }
 
     @GetMapping("/{studentId}/profile")
-    public ResponseEntity<?> getStudentProfile(@PathVariable Long studentId) {
-        try {
-            StudentProfileResponse response = studentProfileService.getProfileByStudentId(studentId);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public StudentProfileResponse getStudentProfile(@PathVariable Long studentId,
+                                                    @AuthenticationPrincipal AuthUser me) {
+        return studentProfileService.getProfileByStudentId(studentId, me);
     }
 }

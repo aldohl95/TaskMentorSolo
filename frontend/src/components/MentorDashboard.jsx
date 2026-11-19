@@ -125,7 +125,7 @@ function MentorDashboard() {
       loadTasks();
       loadProfile();
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data || 'Failed to delete task' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to delete task') });
     }
   };
 
@@ -150,7 +150,7 @@ function MentorDashboard() {
       setMessage({ type: 'success', text: 'Booking updated successfully!' });
       loadBookings();
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data || 'Failed to update booking' });
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Failed to update booking') });
     } finally {
       setLoading(false);
     }
@@ -161,6 +161,7 @@ function MentorDashboard() {
       case 'PENDING': return 'bg-yellow-100 text-yellow-800';
       case 'ACCEPTED': return 'bg-green-100 text-green-800';
       case 'DECLINED': return 'bg-red-100 text-red-800';
+      case 'CANCELLED': return 'bg-gray-200 text-gray-600';
       case 'COMPLETED': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -373,7 +374,7 @@ function MentorDashboard() {
                   >
                     <option value="RESUME_REVIEW">Resume Review</option>
                     <option value="MOCK_INTERVIEW">Mock Interview</option>
-                    <option value="CARRER_ADVICE">Career Advice</option>
+                    <option value="CAREER_ADVICE">Career Advice</option>
                   </select>
                 </div>
               </div>
