@@ -1,0 +1,60 @@
+name: CI
+
+# Runs on every pull request and on every push to main. The two jobs run in parallel.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to the same branch cancels the run that is still in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# The workflow only needs to read the repository.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend/taskmentor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21" # matches java.version in pom.xml
+          cache: maven
+
+      # Compiles, runs every test against a real PostgreSQL started by Testcontainers
+      # (Docker is preinstalled on GitHub's runners), and builds the jar.
+      - name: Build and test
+        run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend (lint, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # `npm test` uses a glob, which needs Node 21+
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # `npm ci` installs exactly what package-lock.json says and fails if it is out of date.
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

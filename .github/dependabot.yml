@@ -1,0 +1,50 @@
+# Dependabot opens pull requests when a dependency has a newer version. Nothing is merged
+# automatically: every update arrives as a PR that runs the CI workflow, and you decide.
+version: 2
+
+updates:
+  # Frontend (frontend/package.json + package-lock.json)
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: deps
+    # One PR for all minor and patch updates, instead of one PR per package.
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    # Major versions can break the app, so they are upgraded deliberately by hand.
+    # Security fixes are not affected by this: they are handled separately and still arrive.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Backend (backend/taskmentor/pom.xml): Spring Boot, jjwt, Flyway, and so on
+  - package-ecosystem: maven
+    directory: /backend/taskmentor
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: deps
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # The actions used by .github/workflows (checkout, setup-java, setup-node).
+  # Major bumps are allowed here: they are how actions move to newer Node runtimes.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: deps
+    groups:
+      actions:
+        patterns: ["*"]
