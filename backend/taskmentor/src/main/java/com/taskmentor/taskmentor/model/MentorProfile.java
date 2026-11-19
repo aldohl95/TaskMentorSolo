@@ -14,8 +14,7 @@ import java.util.List;
 public class MentorProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mentor_seq")
-    @SequenceGenerator(name = "mentor_seq", sequenceName = "mentors_mentor_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "mentor_id", nullable = false, updatable = false)
     private Long mentorId;
 

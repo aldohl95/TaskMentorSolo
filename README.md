@@ -32,7 +32,7 @@ services (for example *Resume Review, 30 min*) and students book exactly the hel
 | Layer | Technology |
 |---|---|
 | Backend | Java 21, Spring Boot 3.5, Spring Security (JWT with jjwt), Spring Data JPA |
-| Database | PostgreSQL |
+| Database | PostgreSQL, Flyway migrations |
 | Frontend | React 19, Vite, Tailwind CSS 4, React Router, Axios |
 | Testing | JUnit 5, Spring MockMvc, Testcontainers (real PostgreSQL), Node's built-in test runner |
 
@@ -47,11 +47,14 @@ Done:
 - [x] Authentication, profiles, task menus, mentor search, booking requests
 - [x] Secrets kept out of source control; the API refuses to start without a strong JWT secret
 - [x] Correct HTTP status codes, role and ownership checks, and an automated API test suite
+- [x] Versioned database migrations (Flyway) and a one-command local database (Docker Compose)
 
 Next:
-- [ ] Versioned database migrations (Flyway), one-command local setup with Docker Compose
 - [ ] Continuous integration (lint, tests, build on every pull request)
-- [ ] Mentor availability and timezone-aware scheduling, with double-booking prevented by the database itself
+- [ ] Peer tutoring: students request tutor status (approved by an admin), pick their subjects and course numbers
+- [ ] Tutor availability: online or in-person blocks with a hall and room, one-on-one or group capacity, and drop-in hours
+- [ ] Instant booking in a single campus timezone, with seat limits and double-booking prevented by the database itself
+- [ ] Tutored-hours reporting: the tutor logs hours, the student confirms, and an admin settles disputes; tutors and admins can export reports
 - [ ] Email and calendar-invite notifications and reminders
 - [ ] Mentor approval, college-email sign-up, password reset, and rate limiting
 - [ ] Deployment to AWS with infrastructure as code, then a pilot with real students and mentors
@@ -60,7 +63,7 @@ Next:
 
 ## 💻 How to Run
 
-**Prerequisites:** Java 21+, Node.js 22+, PostgreSQL 16+ running locally, and Docker (only to run the backend tests).
+**Prerequisites:** Java 21+, Node.js 22+, and either a local PostgreSQL 16+ or Docker (Docker is also needed to run the backend tests).
 
 ### 1. Clone the repository
 ```bash
@@ -69,20 +72,29 @@ cd TaskMentorSolo
 ```
 
 ### 2. Backend setup (Spring Boot)
-Create the database, then configure secrets. Secrets are never committed: they are read from
-environment variables, or from a gitignored `backend/taskmentor/.env` file for local development.
+Configure secrets first. They are never committed: they are read from environment variables, or from a
+gitignored `backend/taskmentor/.env` file for local development.
 
 ```bash
-createdb TaskMentorSolo
 cd backend/taskmentor
 cp .env.example .env
+```
+
+Then provide a database, either way:
+
+```bash
+# A) a PostgreSQL you already run on port 5432
+createdb TaskMentorSolo
+
+# B) a throwaway PostgreSQL in Docker (host port 5433); also set DB_URL=jdbc:postgresql://localhost:5433/TaskMentorSolo in .env
+docker compose --env-file backend/taskmentor/.env up -d --wait
 ```
 
 Edit `.env` and set:
 
 | Variable | Required | Description |
 |---|---|---|
-| `DB_URL` | no | JDBC URL (default `jdbc:postgresql://localhost:5432/TaskMentorSolo`) |
+| `DB_URL` | no | JDBC URL (default `jdbc:postgresql://localhost:5432/TaskMentorSolo`; use port `5433` for the Docker database) |
 | `DB_USERNAME` | no | Database user (default `postgres`) |
 | `DB_PASSWORD` | **yes** | Database password |
 | `JWT_SECRET` | **yes** | Token signing key, at least 32 bytes. Generate with `openssl rand -base64 64` |
@@ -138,19 +150,20 @@ Profiles are saved with `PUT /api/students/profile` and `PUT /api/mentors/profil
 200 afterwards). A student may read their own bookings and cancel them; only the booking's mentor can
 accept, decline, or complete it.
 
-### Upgrading an existing local database
+## 🗄️ Database migrations
 
-The schema is currently created by Hibernate (`ddl-auto=update`), which never changes existing `CHECK`
-constraints. A database created before the enum changes (`CARRER_ADVICE` → `CAREER_ADVICE`, new
-`CANCELLED` status) needs this once; new databases are unaffected. Flyway migrations (Phase 1) replace this.
+The schema is managed by [Flyway](https://flywaydb.org). The migrations in
+`backend/taskmentor/src/main/resources/db/migration` run automatically on startup, and Hibernate only
+*validates* that the entities match the schema (`ddl-auto=validate`), so a mismatch fails fast at startup.
 
-```sql
-BEGIN;
-ALTER TABLE tasks DROP CONSTRAINT tasks_category_check;
-ALTER TABLE tasks ADD CONSTRAINT tasks_category_check
-  CHECK (category IN ('RESUME_REVIEW', 'MOCK_INTERVIEW', 'CAREER_ADVICE'));
-ALTER TABLE bookings DROP CONSTRAINT bookings_status_check;
-ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
-  CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'COMPLETED', 'CANCELLED'));
-COMMIT;
+- To change the schema, add a new `V<next>__short_description.sql`. **Never edit a migration that has been applied.**
+- Enum-valued columns have `CHECK` constraints, so adding an enum value needs a migration that replaces the constraint.
+- Column sizes match the request validation limits (`@Size`), and a test sends every field at its maximum length.
+
+A database created before Flyway was added (by Hibernate's `ddl-auto=update`) cannot be adopted, and startup
+stops with Flyway's "non-empty schema" error. No production data exists yet, so drop and recreate it:
+
+```bash
+dropdb TaskMentorSolo && createdb TaskMentorSolo     # local PostgreSQL
+docker compose down --volumes                        # Docker database
 ```

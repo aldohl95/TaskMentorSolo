@@ -1,0 +1,26 @@
+# Local development database. The backend creates its tables itself (Flyway migrations on startup).
+#
+#   docker compose --env-file backend/taskmentor/.env up -d --wait
+#
+# Uses the same DB_USERNAME / DB_PASSWORD as backend/taskmentor/.env. Point the backend at it with
+#   DB_URL=jdbc:postgresql://localhost:5433/TaskMentorSolo
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: TaskMentorSolo
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD (see backend/taskmentor/.env.example)}
+    ports:
+      # 5433 on the host so it does not clash with a PostgreSQL already installed on 5432.
+      - "5433:5432"
+    volumes:
+      - taskmentor-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  taskmentor-db:
