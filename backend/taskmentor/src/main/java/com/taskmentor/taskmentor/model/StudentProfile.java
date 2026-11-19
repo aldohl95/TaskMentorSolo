@@ -10,8 +10,7 @@ import java.io.Serializable;
 public class StudentProfile{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "student_seq")
-    @SequenceGenerator(name = "student_seq", sequenceName = "students_student_id_seq",  allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "student_id", nullable = false, updatable = false)
     private Long studentId;
 

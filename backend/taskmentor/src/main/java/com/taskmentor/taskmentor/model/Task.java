@@ -9,8 +9,7 @@ import org.springframework.boot.autoconfigure.web.WebProperties;
 public class Task {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "task_seq")
-    @SequenceGenerator(name = "task_seq", sequenceName = "tasks_task_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id", nullable = false, updatable = false)
     private Long taskId;
 
